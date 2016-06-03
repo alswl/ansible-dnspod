@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 DOCUMENTATION = '''
 ---
 module: dnspod
-short_description: use DNSPod API to control domain by alswl.
+short_description: use DNSPod API to control domain
 '''
 
 EXAMPLES = '''
@@ -73,6 +73,8 @@ def record_present(sub_domain, base_domain, record_type, value, token):
     if len(records) > 0:
         assert len(records) == 1, 'more then one records, records: %s.%s' % (
             sub_domain, base_domain)
+        if records[0]['type'] == record_type and records[0]['value'] == value:
+            return None  # no change
         return record_modify(sub_domain=sub_domain, base_domain=base_domain,
                              record_type=record_type, value=value, status='enable', token=token)
 
@@ -90,6 +92,8 @@ def record_present(sub_domain, base_domain, record_type, value, token):
 
 def record_disable(sub_domain, base_domain, token):
     records = enabled_record_query(sub_domain, base_domain, token)
+    if len(records) == 0:
+        return None  # no change
     assert len(records) == 1, 'records count is %d, domain: %s.%s' % (
         len(records), sub_domain, base_domain)
     response = dns_api(path='/Record.Modify',
@@ -158,7 +162,10 @@ def main():
                                     record_type=module.params['record_type'],
                                     value=module.params['value'],
                                     token=module.params['token'])
-            print json.dumps(record)
+            if record is None:
+                module.exit_json(changed=False)
+            else:
+                module.exit_json(changed=True)
         except AssertionError, e:
             module.fail_json(msg=e.message)
     elif module.params['state'] == 'absent':
@@ -166,7 +173,10 @@ def main():
             record = record_disable(sub_domain=module.params['sub_domain'],
                                     base_domain=module.params['base_domain'],
                                     token=module.params['token'])
-            print json.dumps(record)
+            if record is None:
+                module.exit_json(changed=False)
+            else:
+                module.exit_json(changed=True)
         except AssertionError, e:
             module.fail_json(msg=e.message)
 
