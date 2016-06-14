@@ -140,15 +140,6 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
         )
     )
-    #module.exit_json(changed=True, something_else=12345)
-    #module.fail_json(msg="Something fatal happened")
-
-    #print module.params['domain']
-    #print module.params['record_type']
-    #print module.params['value']
-    #print module.params['record_line'].encode('utf-8')
-    #print module.params['token']
-    #print module.params['state']
 
     if module.params['state'] == 'present':
         if module.params['record_type'] is None:
